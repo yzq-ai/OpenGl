@@ -70,12 +70,14 @@ int main(void)
 	//specify the buffer 	
 	glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);//GL_STATIC_DRAW表示使用静态绘制，一次修改多次使用
 
-	//!!!!! REMEMBER!!!!!!!
+	
+	//必须先调用此函数才可使用顶点属性，因为OpenGL是状态机得告诉它该函数的状态
 	glEnableVertexAttribArray(0);
 
+	//顶点属性
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);//2: component count
-															//stride 实际上是一个点（比如说一个2维点是两个顶点组成，所以在这里是两个 float 类型长度）
-
+															//stride 实际上是一个偏移量，类似结构体的多个实例中的一个实例的内存空间（比如说一个2维点是两个顶点组成，所以在这里是两个 float 类型长度）
+		
 
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
