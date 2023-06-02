@@ -2,28 +2,26 @@
 
 ### 当前环境
 
-
 ### 注意
 
 ```
-  请在Debug模式下的X86架构运行项目
+  请在Debug模式下的X86架构运行项目,不让会存在链接错误
 ```
 
-
 * 主机
+
   ```
   Windows 10 家庭版
   版本号	20H2  
   安装日期	2020-09-22  
   操作系统内部版本	19042.1415
   体验	Windows Feature Experience Pack 120.2212.3920.0
-  
   ```
 
 * IDE 
 
   ```
-  Microsoft Visual Studio Community 2022 (64 位) 版本 17.0.4
+  Microsoft Visual Studio Community 2019 (64 位) 版本 17.0.4
   ```
 
 ### 第二部分 在VS中创建项目, 配置GLFW和OpenGL
@@ -43,10 +41,10 @@
    * 设置附加依赖项
    * 项目 => OpenGL属性 => 链接器 => 输入 => 附加依赖项
    * 添加: glfw3.lib
-   **/
+   ** /
   ```
   
-* 处理错误
+* 错误处理
 
   * `Application.obj : error LNK2019: 无法解析的外部符号 __imp__glClear@4，函数 _main 中引用了该符号`
 
@@ -61,46 +59,46 @@
   * `glfw3.lib(win32_init.obj) : error LNK2019: 无法解析的外部符号 __imp__RegisterDeviceNotificationW@12，函数 __glfwPlatformInit 中引用了该符号`
   
     ```c
-   /**
-    * 补充附加依赖项(user32.lib)
-    * 项目 => OpenGL属性 => 链接器 => 输入 => 附加依赖项
-    * 添加: user32.lib
-    **/
+    /**
+     * 补充附加依赖项(user32.lib)
+     * 项目 => OpenGL属性 => 链接器 => 输入 => 附加依赖项
+     * 添加: user32.lib
+     **/
   	```
 
   * `glfw3.lib(win32_monitor.obj) : error LNK2019: 无法解析的外部符号 __imp__CreateDCW@16，函数 __glfwPlatformGetGammaRamp 中引用了该符号`
 
     ```c
-  /**
-   * 补充附加依赖项(gdi32.lib)
-   * 项目 => OpenGL属性 => 链接器 => 输入 => 附加依赖项
-   * 添加: gdi32.lib
-   **/
+    /**
+     * 补充附加依赖项(gdi32.lib)
+     * 项目 => OpenGL属性 => 链接器 => 输入 => 附加依赖项
+     * 添加: gdi32.lib
+     **/
     ```
 
   * `glfw3.lib(win32_window.obj) : error LNK2019: 无法解析的外部符号 __imp__DragQueryFileW@16，函数 _windowProc@16 中引用了该符号`
 
     ```c
-  /**
-   * 补充附加依赖项(shell32.lib)
-   * 项目 => OpenGL属性 => 链接器 => 输入 => 附加依赖项
-   * 添加: shell32.lib
-   **/
+    /** 
+     * 补充附加依赖项(shell32.lib)
+     * 项目 => OpenGL属性 => 链接器 => 输入 => 附加依赖项
+     * 添加: shell32.lib
+     **/
     ```
 
   * `LINK : warning LNK4098: 默认库“MSVCRT”与其他库的使用冲突；请使用 /NODEFAULTLIB:library`
 
     ```c
-   /**
-    * 忽略特定默认库(msvcrt.lib)
-    * 项目 => OpenGL属性 => 链接器 => 输入 => 忽略特定默认库
-    * 添加: msvcrt.lib
-    **/
+    /**
+     * 忽略特定默认库(msvcrt.lib)
+     * 项目 => OpenGL属性 => 链接器 => 输入 => 忽略特定默认库
+     * 添加: msvcrt.lib
+     **/
     ```
 
-* 当前附加依赖库 `glfw3.lib;opengl32.lib;user32.lib;gdi32.lib;shell32.lib`
+* 当前附加依赖库  `glfw3.lib;opengl32.lib;user32.lib;gdi32.lib;shell32.lib`
 
-###  第三部分 配置GLEW
+### 第三部分 配置GLEW
 下载[传送门](https://sourceforge.net/projects/glew/files/glew/2.1.0/glew-2.1.0.zip/download)
 ```c
   /**
@@ -126,18 +124,18 @@
    
      ```c
      /**
-      *交换glew.h和glfw3.h的包含顺序
+      * 交换glew.h和glfw3.h的包含顺序
       **/
      ```
    
    * `Application.obj : error LNK2019: 无法解析的外部符号 __imp__glewInit@0，函数 _main 中引用了该符号`
    
      ```c
-    /**
-     * 添加预处理器定义
-     * 项目 => OpenGL属性 => C\C++ => 预处理器 => 预处理器定义
-     * 添加: GLEW_STATIC
-     **/
+     /**
+      * 添加预处理器定义
+      * 项目 => OpenGL属性 => C\C++ => 预处理器 => 预处理器定义
+      * 添加: GLEW_STATIC
+      **/
      ```
    
    * `LINK : warning LNK4098: 默认库“LIBCMT”与其他库的使用冲突；请使用 /NODEFAULTLIB:library`
@@ -153,10 +151,10 @@
    * `glew32s.lib(glew.obj) : warning LNK4099: 未找到 PDB“vc120.pdb”(使用glew32s.lib(glew.obj)`
    
      ```c
-    /**
-     * 关闭生成调试信息
-     * 项目 => OpenGL属性 => 链接器 => 调试 => 生成调试信息(否, 默认值: 生成调试信息 (/DEBUG))
-     **/
+     /**
+      * 关闭生成调试信息
+      * 项目 => OpenGL属性 => 链接器 => 调试 => 生成调试信息(否, 默认值: 生成调试信息 (/DEBUG))
+      **/
      ```
    
 * 切换NIVDIA显卡

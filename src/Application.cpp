@@ -40,7 +40,7 @@ int main(void)
 	
 
 	/* Create a windowed mode window and its OpenGL context */
-	window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+	window = glfwCreateWindow(1280, 720, "Open GL", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -56,18 +56,19 @@ int main(void)
 
 	std::cout << glGetString(GL_VERSION) << std::endl;
 
-	
+	//OpenGL中生成的所有东西都存在一个唯一的标识 ---> 一个整数
+
 	float positions[6] = { 
 		-0.5f, -0.5f, 		 
 		0.0f,  0.5f, 		 
 		0.5f, -0.5f };  	
 	unsigned int buffer; 	
-	glGenBuffers(1, &buffer);//create an ID :buffer  	
+	glGenBuffers(1, &buffer);//生成一个缓冲区,&buffer表示buffer的id值
 							 
 	//就像 PS 一样在指定层上画画 	
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);  	
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);  	//绑定buffer，表示可以使用buffer
 	//specify the buffer 	
-	glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);//GL_STATIC_DRAW表示使用静态绘制，一次修改多次使用
 
 	//!!!!! REMEMBER!!!!!!!
 	glEnableVertexAttribArray(0);
@@ -75,20 +76,17 @@ int main(void)
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);//2: component count
 															//stride 实际上是一个点（比如说一个2维点是两个顶点组成，所以在这里是两个 float 类型长度）
 
+
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
 	{
 		/* Render here */
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		/*
-		glBegin(GL_TRIANGLES);
-		glVertex2d(-0.5f, -0.5f);
-		glVertex2d(0.0f, 0.5f);
-		glVertex2d(0.5f, -0.5f);
-		glEnd();
-		*/
+		//"GL_TRIANGLES" 画一个三角形 ，
 		glDrawArrays(GL_TRIANGLES, 0, 3);//从buffer里第零组开始draw，一共3组点
+
+
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
