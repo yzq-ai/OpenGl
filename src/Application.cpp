@@ -3,31 +3,53 @@
 
 #include <iostream>
 
-//基于你选定的Shader和Buffer去绘制某个三角形，OpenGL是一种状态机
-
-//顶点属性 Vertex Attribute 和 shader
-/*
-Vertex Attribute:
-
-opengl pipeline 的工作方式：提供图形类型给数据，然后存储在GPU上的内存里（内存里包含了我们想要绘制的所有数据）
-
-然后我们使用shader（在GPU上执行的一种程序）读取这部分数据，然后在屏幕上显示下来
-
-有代表性的是，我们实际上绘制图形使用的是一个Vertex buffer （存储在GPU上的一部分内存的 buffer ）
-
-当shader 实际上开始读取 Vertex buffer 时，它需要知道 buffer 的布局（ buffer 里面有什么）
-
-如果我们不说这个，它只是和c++的其他数据没什么两样
+//编译着色器
+static unsigned int CompileShader(unsigned int type,const std::string& source) {
+	
+	unsigned int id = glCreateShader(type); /* 创建对应类型的着色器 */
+	const char* src = source.c_str();
+	glShaderSource(id, 1, &src, nullptr); /* 设置着色器源码 */
+	glCompileShader(id); /* 编译着色器 */
 
 
+	//错误处理
+	int result;
+	glGetShaderiv(id,GL_COMPILE_STATUS,&result);
+	if (result == GL_FALSE)
+ 	{
+		int length;
+		glGetShaderiv(id,GL_INFO_LOG_LENGTH,&length);
+		char* message = (char*)alloca(length*sizeof(char));//在栈上动态分配变长数组，alloca不需要free，在作用域结束时动态释放内存
+		glGetShaderInfoLog(id,length,&length,message);
+		std::cout << (type==GL_VERTEX_SHADER ?"顶点":"片段") << " 着色器编译失败！(Fialed to compile"<< (type == GL_VERTEX_SHADER ? "vertex" : "fragment") <<" shader!)" << std::endl;
+		std::cout << message << std::endl;
+	
+		glDeleteShader(id);
+		return 0;
+	}
+	std::cout << (type == GL_VERTEX_SHADER ? "顶点" : "片段") << "着色器编译成功！(Suffculty to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << "shader!)" << std::endl;
+	return id;
+}
+//创建着色器
+static unsigned int CreateShader(const std::string& veterxShader,const std::string& fragementShader) 
+{
+	unsigned int program = glCreateProgram();
+	unsigned int vs = CompileShader(GL_VERTEX_SHADER,veterxShader);
+	unsigned int fs = CompileShader(GL_FRAGMENT_SHADER,fragementShader);
 
-glVertexAttribPointer() 参数：
+	//附加着色器
+	glAttachShader(program,vs);
+	glAttachShader(program,fs);
+	//链接着色器到程序上
+	glLinkProgram(program);
+	//在程序中执行验证
+	glValidateProgram(program);
 
-stride: the amount of bytes between each vertex 12 for coordinate(index1), 8 for texture(index2), 12 for normal(index3)(bytes) so the stride is 32 bytes
+	glDeleteShader(vs);//删除顶点着色器
+	glDeleteShader(fs);//删除片段着色器
 
-pointer: 指向属性的指针 coordinate offset = 0 ,texture offset = 12, normal offset = 20
-
-*/
+	return program;
+}
 
 int main(void)
 {
@@ -78,6 +100,29 @@ int main(void)
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);//2: component count
 															//stride 实际上是一个偏移量，类似结构体的多个实例中的一个实例的内存空间（比如说一个2维点是两个顶点组成，所以在这里是两个 float 类型长度）
 		
+	//顶点着色器，需要传递给gpu
+	std::string vertexShader =
+		"#version 330 core\n"//指定版本
+		"\n"
+		"layout(location = 0)in vec4 position;"
+		"\n"
+		"void main()\n"
+		"{\n"
+		" gl_Position = position;\n"
+		"}\n";
+	//片段着色器
+	std::string fragmentShader =
+		"#version 330 core\n"
+		"\n"
+		"layout(location = 0)out vec4 color;"
+		"\n"
+		"void main()\n"
+		"{\n"
+		" color = vec4(1.0, 0.0, 0.0, 1.0);\n"
+		"}\n";
+	unsigned int shader = CreateShader(vertexShader, fragmentShader);
+	glUseProgram(shader); /* 使用着色器程序 */
+
 
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
