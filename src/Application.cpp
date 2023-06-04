@@ -1,8 +1,42 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
+#include <fstream>
+#include <string>
+#include <sstream>
 #include <iostream>
 
+
+struct ShaderProgramSource
+{
+	std::string VertexSource;
+	std::string FragmentSource;
+};
+//引入着色器源码
+static ShaderProgramSource ParseShader(const std::string& filePath)
+{
+	std::ifstream stream(filePath); /* 这里没判断文件是否能正常打开 is_open */
+	enum class ShaderType {
+		NONE = -1, VERTEX = 0, FRAGMENT = 1
+	};
+
+	std::string line;
+	std::stringstream ss[2];
+	ShaderType type = ShaderType::NONE;
+	while (getline(stream, line)) {
+		if (line.find("#shader") != std::string::npos) { /* 找到#shader标记 */
+			if (line.find("vertex") != std::string::npos) { /* 顶点着色器标记 */
+				type = ShaderType::VERTEX;
+			}
+			else if (line.find("fragment") != std::string::npos) { /* 片段着色器标记 */
+				type = ShaderType::FRAGMENT;
+			}
+		}
+		else {
+			ss[(int)type] << line << '\n';
+		}
+	}
+	return { ss[0].str(),ss[1].str() };
+}
 //编译着色器
 static unsigned int CompileShader(unsigned int type,const std::string& source) {
 	
@@ -19,7 +53,7 @@ static unsigned int CompileShader(unsigned int type,const std::string& source) {
  	{
 		int length;
 		glGetShaderiv(id,GL_INFO_LOG_LENGTH,&length);
-		char* message = (char*)alloca(length*sizeof(char));//在栈上动态分配变长数组，alloca不需要free，在作用域结束时动态释放内存
+		char* message = (char*)_malloca(length*sizeof(char));//在栈上动态分配变长数组，alloca不需要free，在作用域结束时动态释放内存
 		glGetShaderInfoLog(id,length,&length,message);
 		std::cout << (type==GL_VERTEX_SHADER ?"顶点":"片段") << " 着色器编译失败！(Fialed to compile"<< (type == GL_VERTEX_SHADER ? "vertex" : "fragment") <<" shader!)" << std::endl;
 		std::cout << message << std::endl;
@@ -69,21 +103,24 @@ int main(void)
 		return -1;
 	}
 
-	/* Make the window's context current */
-	glfwMakeContextCurrent(window);
+    /* Make the window's context current */
+    glfwMakeContextCurrent(window);
 
-	if (glewInit() != GLEW_OK)
-		std::cout << "Error!" << std::endl;
-	//First you need to create a valid OpenGL rendering context and call glewInit() to initialize the extension entry points. 
-
-	std::cout << glGetString(GL_VERSION) << std::endl;
+    GLenum err = glewInit();
+    if (GLEW_OK != err) {
+        std::cout << "Error: " << glewGetErrorString(err) << std::endl;
+    }
+    std::cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
+    std::cout << "Status: Using GL " << glGetString(GL_VERSION) << std::endl;
 
 	//OpenGL中生成的所有东西都存在一个唯一的标识 ---> 一个整数
 
-	float positions[6] = { 
-		-0.5f, -0.5f, 		 
-		0.0f,  0.5f, 		 
-		0.5f, -0.5f };  	
+	 /* 顶点位置浮点型数组 */
+	float positions[6] = {
+		-0.5f, -0.5f,
+		0.0f, 0.5f,
+		0.5f, -0.5f
+	};
 	unsigned int buffer; 	
 	glGenBuffers(1, &buffer);//生成一个缓冲区,&buffer表示buffer的id值
 							 
@@ -100,40 +137,17 @@ int main(void)
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);//2: component count
 															//stride 实际上是一个偏移量，类似结构体的多个实例中的一个实例的内存空间（比如说一个2维点是两个顶点组成，所以在这里是两个 float 类型长度）
 		
-	//顶点着色器，需要传递给gpu
-	std::string vertexShader =
-		"#version 330 core\n"//指定版本
-		"\n"
-		"layout(location = 0)in vec4 position;"
-		"\n"
-		"void main()\n"
-		"{\n"
-		" gl_Position = position;\n"
-		"}\n";
-	//片段着色器
-	std::string fragmentShader =
-		"#version 330 core\n"
-		"\n"
-		"layout(location = 0)out vec4 color;"
-		"\n"
-		"void main()\n"
-		"{\n"
-		" color = vec4(1.0, 0.0, 0.0, 1.0);\n"
-		"}\n";
-	unsigned int shader = CreateShader(vertexShader, fragmentShader);
-	glUseProgram(shader); /* 使用着色器程序 */
-
+	 //从文件中解析着色器源码 
+	ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
+	unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
+	glUseProgram(shader); // 使用着色器程序 
 
 	/* Loop until the user closes the window */
-	while (!glfwWindowShouldClose(window))
-	{
+	while (!glfwWindowShouldClose(window)) {
 		/* Render here */
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		//"GL_TRIANGLES" 画一个三角形 ，
-		glDrawArrays(GL_TRIANGLES, 0, 3);//从buffer里第零组开始draw，一共3组点
-
-
+		glDrawArrays(GL_TRIANGLES, 0, 3); // 绘制
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
@@ -142,6 +156,7 @@ int main(void)
 		glfwPollEvents();
 	}
 
+	glDeleteProgram(shader); /* 删除着色器程序 */
 	glfwTerminate();
 	return 0;
 }
