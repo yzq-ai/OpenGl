@@ -5,6 +5,31 @@
 #include <sstream>
 #include <iostream>
 
+#define ASSERT(x) if (!(x)) __debugbreak() //断言: 调试器中断 
+
+// 反斜杠后面不能有空格,会被编译器识别成转义字符 
+#define GLCall(x) do { \
+    GLClearError();\
+    x;\
+    ASSERT(GLLogCall(#x, __FILE__, __LINE__));\
+ } while (0)
+//清除错误
+static void GLClearError()
+{
+	// 循环获取错误:作用是清除前文的错误 
+	while (glGetError() != GL_NO_ERROR);
+}
+//日志回调
+static bool GLLogCall(const char* function, const char* file, int line)
+{
+	while (GLenum error = glGetError()) {
+		std::cout << "[OpenGL Error] (" <<std::hex<< error << "): "
+			<< function << " " << file << ":" << line << std::endl;
+		return false;
+	}
+	return true;
+}
+
 
 struct ShaderProgramSource
 {
@@ -40,25 +65,27 @@ static ShaderProgramSource ParseShader(const std::string& filePath)
 //编译着色器
 static unsigned int CompileShader(unsigned int type,const std::string& source) {
 	
-	unsigned int id = glCreateShader(type); /* 创建对应类型的着色器 */
+	unsigned int id;
+	// 提升作用域 
+	GLCall(id = glCreateShader(type)); // 创建对应类型的着色器 
 	const char* src = source.c_str();
-	glShaderSource(id, 1, &src, nullptr); /* 设置着色器源码 */
-	glCompileShader(id); /* 编译着色器 */
+	GLCall(glShaderSource(id, 1, &src, nullptr)); // 设置着色器源码 
+	GLCall(glCompileShader(id)); // 编译着色器 
 
 
-	//错误处理
+	//编译错误处理
 	int result;
-	glGetShaderiv(id,GL_COMPILE_STATUS,&result);
+	GLCall(glGetShaderiv(id,GL_COMPILE_STATUS,&result));
 	if (result == GL_FALSE)
  	{
 		int length;
-		glGetShaderiv(id,GL_INFO_LOG_LENGTH,&length);
+		GLCall(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length)); // 获取日志长度
 		char* message = (char*)_malloca(length*sizeof(char));//在栈上动态分配变长数组，alloca不需要free，在作用域结束时动态释放内存
-		glGetShaderInfoLog(id,length,&length,message);
+		GLCall(glGetShaderInfoLog(id,length,&length,message));// 获取日志信息
 		std::cout << (type==GL_VERTEX_SHADER ?"顶点":"片段") << " 着色器编译失败！(Fialed to compile"<< (type == GL_VERTEX_SHADER ? "vertex" : "fragment") <<" shader!)" << std::endl;
 		std::cout << message << std::endl;
 	
-		glDeleteShader(id);
+		GLCall(glDeleteShader(id));
 		return 0;
 	}
 	std::cout << (type == GL_VERTEX_SHADER ? "顶点" : "片段") << "着色器编译成功！(Succed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << "shader!)" << std::endl;
@@ -67,20 +94,19 @@ static unsigned int CompileShader(unsigned int type,const std::string& source) {
 //创建着色器
 static unsigned int CreateShader(const std::string& veterxShader,const std::string& fragementShader) 
 {
-	unsigned int program = glCreateProgram();
+	unsigned int program;
+	GLCall(program = glCreateProgram()); // 创建程序 
 	unsigned int vs = CompileShader(GL_VERTEX_SHADER,veterxShader);
 	unsigned int fs = CompileShader(GL_FRAGMENT_SHADER,fragementShader);
 
 	//附加着色器
-	glAttachShader(program,vs);
-	glAttachShader(program,fs);
-	//链接着色器到程序上
-	glLinkProgram(program);
-	//在程序中执行验证
-	glValidateProgram(program);
+	GLCall(glAttachShader(program,vs));
+	GLCall(glAttachShader(program,fs));
+	GLCall(glLinkProgram(program));//链接着色器到程序上
+	GLCall(glValidateProgram(program));//在程序中执行验证
 
-	glDeleteShader(vs);//删除顶点着色器
-	glDeleteShader(fs);//删除片段着色器
+	GLCall(glDeleteShader(vs));//删除顶点着色器
+	GLCall(glDeleteShader(fs));//删除片段着色器
 
 	return program;
 }
@@ -93,7 +119,6 @@ int main(void)
 	if (!glfwInit())
 		return -1;
 
-	
 
 	/* Create a windowed mode window and its OpenGL context */
 	window = glfwCreateWindow(1280, 720, "Open GL", NULL, NULL);
@@ -111,7 +136,9 @@ int main(void)
         std::cout << "Error: " << glewGetErrorString(err) << std::endl;
     }
     std::cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
-    std::cout << "Status: Using GL " << glGetString(GL_VERSION) << std::endl;
+	unsigned char* glVersion;
+	GLCall(glVersion = (unsigned char*)glGetString(GL_VERSION));
+	std::cout << "Status: Using GL " << glVersion << std::endl;
 
 	//OpenGL中生成的所有东西都存在一个唯一的标识 ---> 一个整数
 
@@ -127,23 +154,24 @@ int main(void)
 		0, 1, 2, // 取出positions数组的 0、1、2
 		2, 3, 0
 	};
+
 	unsigned int buffer; 	
-	glGenBuffers(1, &buffer);//生成一个缓冲区,&buffer表示buffer的id值
-							 
-	//就像 PS 一样在指定层上画画 	
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);  	//绑定buffer，表示可以使用buffer
-	//specify the buffer 	
-	glBufferData(GL_ARRAY_BUFFER, 4 * 2 *  sizeof(float), positions, GL_STATIC_DRAW);//GL_STATIC_DRAW表示使用静态绘制，一次修改多次使用
-	//必须先调用此函数才可使用顶点属性，因为OpenGL是状态机得告诉它该函数的状态
-	glEnableVertexAttribArray(0);
-	//顶点属性
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);//2: component count
-															//stride 实际上是一个偏移量，类似结构体的多个实例中的一个实例的内存空间（比如说一个2维点是两个顶点组成，所以在这里是两个 float 类型长度）
-		
+	
+	GLCall(glGenBuffers(1, &buffer)); // 生成缓冲区 
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer)); // 绑定缓冲区 
+	GLCall(glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(float), positions, GL_STATIC_DRAW)); // 设置缓冲区数据 
+	
+	
+	
+	GLCall(glEnableVertexAttribArray(0)); // 激活顶点属性-索引0-位置 
+	GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0)); // 设置顶点属性-索引0 
+	
+
+	//设置索引缓冲区
 	unsigned int ibo;
-	glGenBuffers(1, &ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+	GLCall(glGenBuffers(1, &ibo));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
+	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW));
 
 
 
@@ -155,9 +183,12 @@ int main(void)
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window)) {
 		/* Render here */
-		glClear(GL_COLOR_BUFFER_BIT);
+		GLCall(glClear(GL_COLOR_BUFFER_BIT));
+		
+		//GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));//错误代码，可运行得到错误的信息
+		GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));//正确代码
 
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 绘制正方形
+		
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
@@ -166,7 +197,7 @@ int main(void)
 		glfwPollEvents();
 	}
 
-	glDeleteProgram(shader); /* 删除着色器程序 */
+	GLCall(glDeleteProgram(shader)); // 删除着色器程序 
 	glfwTerminate();
 	return 0;
 }
