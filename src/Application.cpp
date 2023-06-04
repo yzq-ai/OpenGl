@@ -119,6 +119,10 @@ int main(void)
 	if (!glfwInit())
 		return -1;
 
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);//主版本指定使用 3
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);//次版本指定使用 3.3
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);//使用核心配置文件
+	
 
 	/* Create a windowed mode window and its OpenGL context */
 	window = glfwCreateWindow(1280, 720, "Open GL", NULL, NULL);
@@ -133,6 +137,7 @@ int main(void)
 
 	glfwSwapInterval(1);//设置垂直同步，与你的分辨率同步
 
+	std::cout << glGetString(GL_VERSION) << std::endl;//显示使用的版本
     GLenum err = glewInit();
     if (GLEW_OK != err) {
         std::cout << "Error: " << glewGetErrorString(err) << std::endl;
@@ -156,6 +161,14 @@ int main(void)
 		0, 1, 2, // 取出positions数组的 0、1、2
 		2, 3, 0
 	};
+
+
+	unsigned int vao; // 保存顶点数组对象ID 
+	GLCall(glGenVertexArrays(1, &vao)); // 生成顶点数组 
+	GLCall(glBindVertexArray(vao)); // 绑定顶点数组
+
+
+
 
 	unsigned int buffer; 	
 	
@@ -185,7 +198,14 @@ int main(void)
 	int location = glGetUniformLocation(shader,"u_Color");//该必须必须与着色器的实际变量名完全一致,实际获取的是变量在文件中的位置
 	ASSERT(location!=-1);//检查一下当前的变量是否还存在，或者已被使用
 	
+	//解绑了所有的东西
+	GLCall(glBindVertexArray(0));
+	GLCall(glUseProgram(0));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 
+	
+	
 	float r = 0.0f;
 	float increment = 0.005;
 	/* Loop until the user closes the window */
@@ -193,7 +213,20 @@ int main(void)
 		/* Render here */
 		GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
+		GLCall(glUseProgram(shader));//绑定着色器
 		GLCall( glUniform4f(location,r, 0.3f, 0.8f, 1.0f));//设置该统一变量
+
+
+		GLCall(glBindVertexArray(vao));
+
+
+
+		GLCall(glBindBuffer(GL_ARRAY_BUFFER,buffer));//绑定顶点缓冲区
+		GLCall(glEnableVertexAttribArray(0)); // 设置顶点缓冲区布局 
+		GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0)); // 设置顶点属性-索引0 
+		GLCall(GL_ELEMENT_ARRAY_BUFFER,ibo);//绑定索引缓冲区
+		
+		
 
 		if (r > 1.0f)
 			increment = -0.005;
@@ -201,8 +234,8 @@ int main(void)
 			increment = 0.005f;
 
 		r += increment;
-
 		//GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));//错误代码，可运行得到错误的信息
+
 		GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));//正确代码
 
 		
