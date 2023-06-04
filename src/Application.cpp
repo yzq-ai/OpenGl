@@ -131,6 +131,8 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+	glfwSwapInterval(1);//设置垂直同步，与你的分辨率同步
+
     GLenum err = glewInit();
     if (GLEW_OK != err) {
         std::cout << "Error: " << glewGetErrorString(err) << std::endl;
@@ -180,11 +182,26 @@ int main(void)
 	unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
 	glUseProgram(shader); // 使用着色器程序 
 
+	int location = glGetUniformLocation(shader,"u_Color");//该必须必须与着色器的实际变量名完全一致,实际获取的是变量在文件中的位置
+	ASSERT(location!=-1);//检查一下当前的变量是否还存在，或者已被使用
+	
+
+	float r = 0.0f;
+	float increment = 0.005;
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window)) {
 		/* Render here */
 		GLCall(glClear(GL_COLOR_BUFFER_BIT));
-		
+
+		GLCall( glUniform4f(location,r, 0.3f, 0.8f, 1.0f));//设置该统一变量
+
+		if (r > 1.0f)
+			increment = -0.005;
+		if (r < 0.0f)
+			increment = 0.005f;
+
+		r += increment;
+
 		//GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));//错误代码，可运行得到错误的信息
 		GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));//正确代码
 
