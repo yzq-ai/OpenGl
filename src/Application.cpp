@@ -61,7 +61,7 @@ static unsigned int CompileShader(unsigned int type,const std::string& source) {
 		glDeleteShader(id);
 		return 0;
 	}
-	std::cout << (type == GL_VERTEX_SHADER ? "顶点" : "片段") << "着色器编译成功！(Suffculty to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << "shader!)" << std::endl;
+	std::cout << (type == GL_VERTEX_SHADER ? "顶点" : "片段") << "着色器编译成功！(Succed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << "shader!)" << std::endl;
 	return id;
 }
 //创建着色器
@@ -115,11 +115,17 @@ int main(void)
 
 	//OpenGL中生成的所有东西都存在一个唯一的标识 ---> 一个整数
 
-	 /* 顶点位置浮点型数组 */
-	float positions[6] = {
-		-0.5f, -0.5f,
-		0.0f, 0.5f,
-		0.5f, -0.5f
+	 // 顶点位置浮点型数组 
+	float positions[] = {
+		-0.5f, -0.5f, // 0
+		0.5f, -0.5f,  // 1
+		0.5f, 0.5f,   // 2
+		-0.5f, 0.5f,  // 3
+	};
+	// 索引缓冲区所需索引数组 
+	unsigned int indices[] = {
+		0, 1, 2, // 取出positions数组的 0、1、2
+		2, 3, 0
 	};
 	unsigned int buffer; 	
 	glGenBuffers(1, &buffer);//生成一个缓冲区,&buffer表示buffer的id值
@@ -127,16 +133,20 @@ int main(void)
 	//就像 PS 一样在指定层上画画 	
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);  	//绑定buffer，表示可以使用buffer
 	//specify the buffer 	
-	glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);//GL_STATIC_DRAW表示使用静态绘制，一次修改多次使用
-
-	
+	glBufferData(GL_ARRAY_BUFFER, 4 * 2 *  sizeof(float), positions, GL_STATIC_DRAW);//GL_STATIC_DRAW表示使用静态绘制，一次修改多次使用
 	//必须先调用此函数才可使用顶点属性，因为OpenGL是状态机得告诉它该函数的状态
 	glEnableVertexAttribArray(0);
-
 	//顶点属性
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);//2: component count
 															//stride 实际上是一个偏移量，类似结构体的多个实例中的一个实例的内存空间（比如说一个2维点是两个顶点组成，所以在这里是两个 float 类型长度）
 		
+	unsigned int ibo;
+	glGenBuffers(1, &ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
+
+
 	 //从文件中解析着色器源码 
 	ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
 	unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
@@ -147,7 +157,7 @@ int main(void)
 		/* Render here */
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glDrawArrays(GL_TRIANGLES, 0, 3); // 绘制
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 绘制正方形
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
