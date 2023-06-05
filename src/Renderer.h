@@ -1,7 +1,10 @@
 #pragma once
 
-#include <iostream>
 #include "GL/glew.h"
+#include "VertexArray.h"
+#include "IndexBuffer.h"
+#include "Shader.h"
+#include <iostream>
 
 #define ASSERT(x) if (!(x)) __debugbreak() //断言: 调试器中断 
 
@@ -16,3 +19,11 @@
 void GLClearError();
 //日志回调
 bool GLLogCall(const char* function, const char* file, int line);
+
+
+
+class Renderer {
+public:
+    void Clear()const ;
+    void Draw(const VertexArray& va,const IndexBuffer& ib,const Shader& shader)const;
+};
