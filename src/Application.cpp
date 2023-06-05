@@ -1,34 +1,14 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+
 #include <fstream>
 #include <string>
 #include <sstream>
 #include <iostream>
+#include "GL/glew.h"
+#include "GLFW/glfw3.h"
 
-#define ASSERT(x) if (!(x)) __debugbreak() //断言: 调试器中断 
-
-// 反斜杠后面不能有空格,会被编译器识别成转义字符 
-#define GLCall(x) do { \
-    GLClearError();\
-    x;\
-    ASSERT(GLLogCall(#x, __FILE__, __LINE__));\
- } while (0)
-//清除错误
-static void GLClearError()
-{
-	// 循环获取错误:作用是清除前文的错误 
-	while (glGetError() != GL_NO_ERROR);
-}
-//日志回调
-static bool GLLogCall(const char* function, const char* file, int line)
-{
-	while (GLenum error = glGetError()) {
-		std::cout << "[OpenGL Error] (" <<std::hex<< error << "): "
-			<< function << " " << file << ":" << line << std::endl;
-		return false;
-	}
-	return true;
-}
+#include "Renderer.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
 
 
 struct ShaderProgramSource
@@ -134,7 +114,11 @@ int main(void)
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
-
+	/**
+	 * 交换间隔，交换缓冲区之前等待的帧数，通常称为v-sync
+	 * 默认情况下，交换间隔为0
+	 * 这里设置为1，即每帧更新一次
+	 **/
 	glfwSwapInterval(1);//设置垂直同步，与你的分辨率同步
 
 	std::cout << glGetString(GL_VERSION) << std::endl;//显示使用的版本
@@ -167,29 +151,16 @@ int main(void)
 	GLCall(glGenVertexArrays(1, &vao)); // 生成顶点数组 
 	GLCall(glBindVertexArray(vao)); // 绑定顶点数组
 
-
-
-
-	unsigned int buffer; 	
-	
-	GLCall(glGenBuffers(1, &buffer)); // 生成缓冲区 
-	GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer)); // 绑定缓冲区 
-	GLCall(glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(float), positions, GL_STATIC_DRAW)); // 设置缓冲区数据 
-	
+	VertexBuffer vb(positions, 4 * 2 * sizeof(float));
 	
 	
 	GLCall(glEnableVertexAttribArray(0)); // 激活顶点属性-索引0-位置 
 	GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0)); // 设置顶点属性-索引0 
 	
-
 	//设置索引缓冲区
-	unsigned int ibo;
-	GLCall(glGenBuffers(1, &ibo));
-	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
-	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW));
+	IndexBuffer ib(indices, 6 );
 
-
-
+	
 	 //从文件中解析着色器源码 
 	ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
 	unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
@@ -197,12 +168,14 @@ int main(void)
 
 	int location = glGetUniformLocation(shader,"u_Color");//该必须必须与着色器的实际变量名完全一致,实际获取的是变量在文件中的位置
 	ASSERT(location!=-1);//检查一下当前的变量是否还存在，或者已被使用
+	GLCall(glUniform4f(location, 0.2f, 0.3f, 0.8f, 1.0f)); // 设置对应的统一变量 
 	
 	//解绑了所有的东西
 	GLCall(glBindVertexArray(0));
 	GLCall(glUseProgram(0));
-	GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
-	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+	vb.UnBind();
+	ib.UnBind();
+
 
 	
 	
@@ -221,11 +194,12 @@ int main(void)
 
 
 
-		GLCall(glBindBuffer(GL_ARRAY_BUFFER,buffer));//绑定顶点缓冲区
+		vb.Bind();//绑定顶点缓冲区
 		GLCall(glEnableVertexAttribArray(0)); // 设置顶点缓冲区布局 
 		GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0)); // 设置顶点属性-索引0 
-		GLCall(GL_ELEMENT_ARRAY_BUFFER,ibo);//绑定索引缓冲区
 		
+		ib.Bind();
+
 		
 
 		if (r > 1.0f)
