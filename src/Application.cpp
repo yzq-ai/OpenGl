@@ -13,6 +13,10 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 int main(void)
 {
 	GLFWwindow* window;
@@ -128,16 +132,36 @@ int main(void)
 
 		Renderer renderer;
 
+		ImGui::CreateContext();//创建ImGui上下文
+		ImGui_ImplGlfw_InitForOpenGL(window, true);//链接GLFW窗口
+		ImGui::StyleColorsDark();//使用ImGui的“暗色模式”
+
+
+		
+		const char* glsl_version = "#version 330";// 需要指定glsl版本, 也就是shader中的version
+		ImGui_ImplOpenGL3_Init(glsl_version);//将ImGui与OpenGL进行连接
+		glm::vec3 tranlation(200, 200, 0);
+
 		float r = 0.0f;
 		float increment = 0.005;
+
+
 		/* Loop until the user closes the window */
 		while (!glfwWindowShouldClose(window)) {
 			/* Render here */
 			renderer.Clear();
 
+
+			ImGui_ImplOpenGL3_NewFrame();//告诉ImGui开始一个新的渲染帧
+			ImGui_ImplGlfw_NewFrame();//告诉ImGui发生了新的GLFW窗口事件
+			ImGui::NewFrame();//ImGui准备开始一个新的界面元素布局帧
+
+			glm::mat4 model = glm::translate(glm::mat4(1.0f), tranlation);
+			glm::mat4 mvp = proj * view * model; // 模型视图投影矩阵 
+
 			shader.Bind();
 			//shader.SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
-
+			shader.SetUniformMat4f("u_MVP", mvp); 
 			renderer.Draw(va,ib,shader);
 
 			va.Bind();//绑定顶点数组
@@ -152,7 +176,21 @@ int main(void)
 
 			r += increment;
 		*/
+			{
+			
 
+				ImGui::Begin("ImGui");//开始一个名为"ImGui"的界面布局块
+				ImGui::SliderFloat3("Tranlation", &tranlation.x, 0.0f, 1100.0f);//添加了一个名为"Translation"的滑动条控件
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+				
+
+				ImGui::End();
+
+				
+			}
+
+			ImGui::Render();//将当前的UI布局帧渲染为一个完整的UI图像
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());//将最近一次生成的UI图形数据绘制到OpenGL上下文中  
 
 
 			/* Swap front and back buffers */
@@ -162,6 +200,12 @@ int main(void)
 			glfwPollEvents();
 		}
 	}
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
+	glfwDestroyWindow(window);
+
 	glfwTerminate();
 	return 0;
 }
