@@ -56,10 +56,10 @@ int main(void)
 	{ //限定作用域
 		// 顶点位置浮点型数组 
 		float positions[] = {
-			-0.5f, -0.5f, 0.0f, 0.0f,  // 0
-			0.5f,  -0.5f, 1.0f, 0.0f,  // 1
-			0.5f,  0.5f,  1.0f, 1.0f,  // 2
-		    -0.5f, 0.5f,  0.0f, 1.0f   // 3
+			100.0f, 100.0f, 0.0f, 0.0f,  // 0
+			200.0f, 100.0f, 1.0f, 0.0f,  // 1
+			200.0f, 200.0f, 1.0f, 1.0f,  // 2
+			100.0f, 200.0f, 0.0f, 1.0f   // 3
 		};
 		// 索引缓冲区所需索引数组 
 		unsigned int indices[] = {
@@ -96,8 +96,9 @@ int main(void)
 		//设置索引缓冲区
 		IndexBuffer ib(indices, 6);
 
-		glm::mat4 proj = glm::ortho(-1.0f,1.0f,-0.6f,0.6f,-1.0f,1.0f);//产生一个正交矩阵,设置纵横比4:3
-
+		// 这里应该是 960x720 而不是 960x540 的分辨率 
+		glm::mat4 proj = glm::ortho(0.0f, 1280.0f, 0.0f, 720.0f, -1.0f, 1.0f);
+		glm::vec4 vp(100.0f, 100.0f, 0.0f, 1.0f);
 
 		Shader shader("res/shaders/Basic.shader");
 		shader.Bind();

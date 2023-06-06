@@ -1,5 +1,10 @@
 ## OpenGL 系列教程代码项目仓库
 
+### 第三方库
+
+* 数学库[glm](https://github.com/g-truc/glm)
+* 图像解码库[stb_image](https://github.com/nothings/stb)
+
 ### 当前环境
 
 ### 注意
