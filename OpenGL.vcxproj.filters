@@ -16,6 +16,12 @@
     <Filter Include="res">
       <UniqueIdentifier>{d2a47be3-d56d-4c89-9766-c2aa192b9fab}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\vendor">
+      <UniqueIdentifier>{37cbb62d-5c7e-49dc-8dc5-19ca6ae1adfe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\vendor\stb_image">
+      <UniqueIdentifier>{7fc7e3e0-b87b-4f33-9aba-06392f8cca25}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Application.cpp">
@@ -34,6 +40,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\Shader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\vendor\stb_image\stb_image.cpp">
+      <Filter>源文件\vendor\stb_image</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Texture.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -62,6 +74,12 @@
       <Filter>源文件</Filter>
     </ClInclude>
     <ClInclude Include="src\Shader.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\vendor\stb_image\stb_image.h">
+      <Filter>源文件\vendor\stb_image</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Texture.h">
       <Filter>源文件</Filter>
     </ClInclude>
   </ItemGroup>

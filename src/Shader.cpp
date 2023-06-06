@@ -5,6 +5,8 @@
 #include <sstream>
 #include "Renderer.h"
 
+
+
 Shader::Shader(const std::string& filepath)
 	:m_FilePath(filepath), m_RendererID(0)
 {
@@ -31,6 +33,16 @@ void Shader::UnBind() const
 void Shader::SetUniform4f(const std::string& name, float v0, float v1,float v2, float v3)
 {
 	GLCall(glUniform4f(GetUniformLocation(name), v0, v1, v2, v3)); // 设置对应的统一变量 
+}
+
+void Shader::SetUniform1i(const std::string& name, int value)
+{
+	GLCall(glUniform1i(GetUniformLocation(name), value));
+}
+
+void Shader::SetUniformlf(const std::string& name, int value)
+{
+	GLCall(glUniform1f(GetUniformLocation(name), value));
 }
 
 ShaderProgramSource Shader::ParseShader(const std::string& filepath)
