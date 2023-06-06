@@ -6,9 +6,11 @@ layout(location = 1)in vec2 textCoord; //在位置1处取一个纹理坐标
 
 out vec2 v_TextCoord;
 
+uniform mat4 u_MVP;//模型视图投影矩阵
+
 void main()
 {
-	gl_Position = position;
+	gl_Position = u_MVP * position;
 	v_TextCoord = textCoord;
 };
 

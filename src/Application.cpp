@@ -10,6 +10,9 @@
 #include "Shader.h"
 #include "Texture.h"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 int main(void)
 {
 	GLFWwindow* window;
@@ -21,7 +24,6 @@ int main(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);//主版本指定使用 3
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);//次版本指定使用 3.3
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);//使用核心配置文件
-
 
 	/* Create a windowed mode window and its OpenGL context */
 	window = glfwCreateWindow(1280, 720, "Open GL", NULL, NULL);
@@ -45,10 +47,10 @@ int main(void)
 	if (GLEW_OK != err) {
 		std::cout << "Error: " << glewGetErrorString(err) << std::endl;
 	}
-	std::cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
+	std::cout<<"GLEW使用的版本是:" << "( Status: Using GLEW )" << glewGetString(GLEW_VERSION) << std::endl;
 	unsigned char* glVersion;
 	GLCall(glVersion = (unsigned char*)glGetString(GL_VERSION));
-	std::cout << "Status: Using GL " << glVersion << std::endl;
+	std::cout<<"GL使用的版本是:" << "( Status: Using GL )" << glVersion << std::endl;
 
 
 	{ //限定作用域
@@ -65,8 +67,19 @@ int main(void)
 			2, 3, 0
 		};
 
-		
-		GLCall(glEnable(GL_BLEND));//启用混合
+		/*
+		混合:将输出颜色(判断着色器输出的颜色)和目标缓冲区已有的颜色结合
+		glEnable/glDisable(启用&关闭) => glBlendFunc(指定颜色因子) => glBlendEquation(指定混合模式)
+		glBlendEquation(mode) mode: src和dest的混合方式(默认GL_FUNC_ADD, 叠加)
+		*/
+		GLCall(glEnable(GL_BLEND));//启用混合(默认不会启用)
+		/*
+		glBlendFunc(src, dest) 指定颜色因子
+		src 指定输出颜色(RGBA)因子的计算方式, 默认为GL_ONE
+		dest 指定目标颜色因子的计算方式, 默认为GL_ZERO
+		GL_SRC_ALPHA 因为src的alpha为0, GL_ONE_MINUS_SRC_ALPHA 1-src.alpha
+		RGBA = Srgba * GL_SRC_ALPHA + Drgba * GL_ONE_MINUS_SRC_ALPHA
+		*/
 		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));//使用混合
 		
 
@@ -83,10 +96,15 @@ int main(void)
 		//设置索引缓冲区
 		IndexBuffer ib(indices, 6);
 
+		glm::mat4 proj = glm::ortho(-1.0f,1.0f,-0.6f,0.6f,-1.0f,1.0f);//产生一个正交矩阵,设置纵横比4:3
+
 
 		Shader shader("res/shaders/Basic.shader");
 		shader.Bind();
-		shader.SetUniform4f("u_Color", 0.2f, 0.3f, 0.8f, 1.0f);
+		//shader.SetUniform4f("u_Color", 0.2f, 0.3f, 0.8f, 1.0f);
+		shader.SetUniformMat4f("u_MVP",proj);
+
+
 
 		Texture texture("res/textures/avater.png");
 		texture.Bind();//绑定纹理，默认值是0
@@ -111,7 +129,7 @@ int main(void)
 			renderer.Clear();
 
 			shader.Bind();
-			shader.SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
+			//shader.SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
 
 			renderer.Draw(va,ib,shader);
 

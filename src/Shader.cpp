@@ -45,6 +45,11 @@ void Shader::SetUniformlf(const std::string& name, int value)
 	GLCall(glUniform1f(GetUniformLocation(name), value));
 }
 
+void Shader::SetUniformMat4f(const std::string& name, const glm::mat4& matrix)
+{
+	GLCall(glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, &matrix[0][0]));
+}
+
 ShaderProgramSource Shader::ParseShader(const std::string& filepath)
 {
 	std::ifstream stream(filepath); // 这里没判断文件是否能正常打开 is_open 
@@ -127,7 +132,7 @@ int Shader::GetUniformLocation(const std::string& name)
 	int location;
 	GLCall(location = glGetUniformLocation(m_RendererID, name.c_str()));
 	if (location == -1) { //不终止着色器，输出错误
-		std::cout << "Warning: uniform '" << name << "' doesn't exist" << std::endl;
+		std::cout<<"警告:统一变量"<<name<<"不存在! " << "( Warning: uniform '" << name << "' doesn't exist )" << std::endl;
 	}
 
 	m_UniformlocationCache[name] = location;
