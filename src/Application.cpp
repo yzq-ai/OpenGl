@@ -56,10 +56,10 @@ int main(void)
 	{ //限定作用域
 		// 顶点位置浮点型数组 
 		float positions[] = {
-			100.0f, 100.0f, 0.0f, 0.0f,  // 0
-			200.0f, 100.0f, 1.0f, 0.0f,  // 1
-			200.0f, 200.0f, 1.0f, 1.0f,  // 2
-			100.0f, 200.0f, 0.0f, 1.0f   // 3
+			100.0f, 100.0f, 0.0f, 0.0f,  // 0 左下角顶点 (100,100)
+			200.0f, 100.0f, 1.0f, 0.0f,  // 1 左上角顶点 (200,100)
+			200.0f, 200.0f, 1.0f, 1.0f,  // 2 右上角顶点 (200,200)
+			100.0f, 200.0f, 0.0f, 1.0f   // 3 右下角顶点 (100,200)
 		};
 		// 索引缓冲区所需索引数组 
 		unsigned int indices[] = {
@@ -96,14 +96,20 @@ int main(void)
 		//设置索引缓冲区
 		IndexBuffer ib(indices, 6);
 
-		// 这里应该是 960x720 而不是 960x540 的分辨率 
+		// 左:0 、 右:1280 、 下:0 、上:720
 		glm::mat4 proj = glm::ortho(0.0f, 1280.0f, 0.0f, 720.0f, -1.0f, 1.0f);
-		glm::vec4 vp(100.0f, 100.0f, 0.0f, 1.0f);
+		// 相机位置          视图矩阵 
+		glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(-100, 0, 0));//向左移动100
+		// 模型矩阵 对象位置 
+		glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(200, 200, 0));//向右移动200，向上移动200
+		// 模型视图投影矩阵
+		glm::mat4 mvp = proj * view * model;  
+
 
 		Shader shader("res/shaders/Basic.shader");
 		shader.Bind();
 		//shader.SetUniform4f("u_Color", 0.2f, 0.3f, 0.8f, 1.0f);
-		shader.SetUniformMat4f("u_MVP",proj);
+		shader.SetUniformMat4f("u_MVP",mvp);
 
 
 
@@ -138,15 +144,14 @@ int main(void)
 
 			ib.Bind();
 
-
-
+		/*
 			if (r > 1.0f)
 				increment = -0.005;
 			if (r < 0.0f)
 				increment = 0.005f;
 
 			r += increment;
-			
+		*/
 
 
 
