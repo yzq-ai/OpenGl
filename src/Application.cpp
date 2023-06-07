@@ -3,12 +3,6 @@
 #include "GLFW/glfw3.h"
 
 #include "Renderer.h"
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
-#include "VertexArray.h"
-#include "VertexBufferLayout.h"
-#include "Shader.h"
-#include "Texture.h"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -18,6 +12,7 @@
 #include "imgui/imgui_impl_opengl3.h"
 
 #include "tests/TestClearColor.h"//测试
+#include "tests/TestTexture2D.h"
 
 int main(void)
 {
@@ -98,8 +93,10 @@ int main(void)
 		test::TestMenu* testMenu = new test::TestMenu(currentTest);
 		currentTest = testMenu;
 
-		testMenu->RegisterTest<test::TestClearColor>("ClearColor");//在TsetMenu上注册一个TestClearColor类
-		
+		//在TsetMenu上注册类
+		testMenu->RegisterTest<test::TestClearColor>("Clear Color");
+		testMenu->RegisterTest<test::TestTexture2D>("2D Texture");
+
 		while (!glfwWindowShouldClose(window)) {
 			GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));//设置黑色清屏
 			renderer.Clear();
@@ -112,7 +109,7 @@ int main(void)
 			{
 				currentTest->OnUpdate(0.0f);
 				currentTest->OnRender();
-				ImGui::Begin("ImGui-Test");// 标题
+				ImGui::Begin("Test");// 标题
 				if (currentTest != testMenu && ImGui::Button(" <- Back"))//创建返回按钮
 				{
 					delete currentTest;
