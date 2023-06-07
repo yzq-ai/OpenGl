@@ -90,24 +90,36 @@ int main(void)
 		const char* glsl_version = "#version 330";// 需要指定GLSL版本, 也就是shader中的version
 		ImGui_ImplOpenGL3_Init(glsl_version);//将ImGui与OpenGL进行连接
 
-		test::TestClearColor test;
-
 		glm::vec3 tranlationA(200, 200, 0);
 		glm::vec3 tranlationB(400, 200, 0);
 
+
+		test::Test* currentTest = nullptr;
+		test::TestMenu* testMenu = new test::TestMenu(currentTest);
+		currentTest = testMenu;
+
+		testMenu->RegisterTest<test::TestClearColor>("ClearColor");//在TsetMenu上注册一个TestClearColor类
 		
 		while (!glfwWindowShouldClose(window)) {
+			GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));//设置黑色清屏
 			renderer.Clear();
-
-			test.OnUpdate(0.0f);
-            test.OnRender();
 
 			ImGui_ImplOpenGL3_NewFrame();//告诉ImGui开始一个新的渲染帧
 			ImGui_ImplGlfw_NewFrame();//告诉ImGui发生了新的GLFW窗口事件
 			ImGui::NewFrame();//ImGui准备开始一个新的界面元素布局帧
-			
+
+			if (currentTest)//注册的组件存在，渲染到ImgUi上
 			{
-				test.OnImGuiRender();
+				currentTest->OnUpdate(0.0f);
+				currentTest->OnRender();
+				ImGui::Begin("ImGui-Test");// 标题
+				if (currentTest != testMenu && ImGui::Button(" <- Back"))//创建返回按钮
+				{
+					delete currentTest;
+					currentTest = testMenu;
+				}
+				currentTest->OnImGuiRender();
+				ImGui::End();
 			}
 
 			ImGui::Render();//将当前的UI布局帧渲染为一个完整的UI图像
@@ -119,6 +131,12 @@ int main(void)
 
 			/* Poll for and process events */
 			glfwPollEvents();
+		}
+
+		delete currentTest;//删除注册的组件
+		if (currentTest != testMenu)
+		{
+			delete testMenu;//删除面板
 		}
 	}
 	ImGui_ImplOpenGL3_Shutdown();
