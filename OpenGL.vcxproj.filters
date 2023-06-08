@@ -149,4 +149,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\textures\avater.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\textures\ChernoLogo.png">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

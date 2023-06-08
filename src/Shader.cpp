@@ -124,7 +124,7 @@ unsigned int Shader::CreateShader(const std::string& vertexShader,const std::str
 	return program;
 }
 
-int Shader::GetUniformLocation(const std::string& name)
+int Shader::GetUniformLocation(const std::string& name) const 
 {
 	if (m_UniformlocationCache.find(name) != m_UniformlocationCache.end()) {
 		return m_UniformlocationCache[name];
