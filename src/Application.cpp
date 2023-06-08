@@ -13,6 +13,7 @@
 
 #include "tests/TestClearColor.h"//测试
 #include "tests/TestTexture2D.h"
+#include "tests/TestBatchRender.h"
 
 int main(void)
 {
@@ -96,6 +97,8 @@ int main(void)
 		//在TsetMenu上注册类
 		testMenu->RegisterTest<test::TestClearColor>("Clear Color");
 		testMenu->RegisterTest<test::TestTexture2D>("2D Texture");
+		testMenu->RegisterTest<test::TestBatchRender>("Batch Render");
+
 
 		while (!glfwWindowShouldClose(window)) {
 			GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));//设置黑色清屏
